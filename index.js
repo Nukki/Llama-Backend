@@ -13,7 +13,7 @@ const options = {
   production: false
 };
 const apnProvider = new apn.Provider(options);
-
+console.log(options.token.keyId)
 
 // set up express server
 app.use(bodyParser.urlencoded({extended: true}))
@@ -29,27 +29,26 @@ app.post('/notify', (req, res) => {
   const device_token = req.body.device_token;
   const long = req.body.long;
   const lat = req.body.lat;
-
-  console.log('token: ' + token);
-  console.log('long: ' + long);
-  console.log('lat: ' + lat);
+  // console.log('token: ' + device_token);
+  // console.log('long: ' + long);
+  // console.log('lat: ' + lat);
 
   // configure a notification
   var noty = new apn.Notification();
   noty.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
-  noty.badge = 3;
+  noty.badge = 1;
   noty.sound = "ping.aiff";
-  noty.alert = "\uD83D\uDCE7 \u2709 You have a new message";
+  noty.alert = "OMG!!! Its a notification";
   noty.payload = {
-    'person_name': 'Angela Moss',
-    'long': long,
-    'lat': lat
+    'messageFrom': 'super duper app'
   };
   noty.topic = process.env.APP_BUNDLE_ID;
+  // noty.body = 'OMG!!! Its a notification';
 
   // send Notification
   apnProvider.send(noty, device_token).then( (result) => {
     // see documentation for an explanation of result
+    console.log(result);
   });
 
   res.status(200).send('I see you need a notification');
@@ -58,6 +57,7 @@ app.post('/notify', (req, res) => {
 
 // error handling
 app.use((err, req, res, next) => {
+  console.log(err)
   res.status(err.status || 500).send(err.message || 'Internal server error.');
 });
 app.use((req, res) => {
