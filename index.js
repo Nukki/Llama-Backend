@@ -15,6 +15,7 @@ const options = {
 const apnProvider = new apn.Provider(options);
 console.log(options.token.keyId)
 
+
 // set up express server
 app.use(bodyParser.urlencoded({extended: true}))
    .use(bodyParser.json());
