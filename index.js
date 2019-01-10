@@ -1,7 +1,28 @@
+const path = require('path');
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const apn = require('apn');
+
+const server = require('http').createServer(app);
+const io = require('socket.io').listen(server);
+const port = process.env.PORT || 1337;
+
+// setup sockets
+io.on('connection', (socket) => {
+  console.log("Ayyyy someone connected!!!!!" + socket.id)
+  const arr = [ { name: 'Jackie', long: `${Math.random()}`, lat: `${Math.random()}`, key: '3'},];
+  socket.emit('update', arr);
+  console.log('emitted location update');
+  // setInterval(() => {
+  //   const arr = [ { name: 'Jackie', long: `${Math.random()}`, lat: `${Math.random()}`, key: '3'},];
+  //   socket.emit('update', arr);
+  //   console.log('emitted location update');
+  // },1000);
+  socket.on('disconnect', () => {
+    console.log(`socket ${socket.id} disonnected`);
+  })
+});
 
 // set up APNs
 const options = {
@@ -19,12 +40,14 @@ console.log(options.token.keyId)
 // set up express server
 app.use(bodyParser.urlencoded({extended: true}))
    .use(bodyParser.json());
+app.use(express.static(path.join('public')));
 
 app.get('/', (req, res) => {
   console.log('route: / was hit')
   res.status(200).send('Hello');
 })
 
+// starts a socket room for geofencing and location sharing
 // device_token, long, lat will be in req.body
 app.post('/notify', (req, res) => {
   const device_token = req.body.device_token;
@@ -51,23 +74,32 @@ app.post('/notify', (req, res) => {
     // see documentation for an explanation of result
     console.log(result);
   });
-
   res.status(200).send('I see you need a notification');
 })
 
+// unsafe person sends location updates here and
+// they are emitted to an appropriate socket room
+app.post('/update', (req, res) => {
+
+})
+
+// closes the socket room with location sharing
+app.post('/imsafe', (req, res) => {
+  console.log('im safe')
+})
 
 // error handling
-app.use((err, req, res, next) => {
+app.use((err, req, res, next) => { latest
   console.log(err)
   res.status(err.status || 500).send(err.message || 'Internal server error.');
 });
-app.use((req, res) => {
+app.use((req, res) => { latest
   res.sendStatus(404);
-});
-
-app.listen(process.env.PORT || 3000, () => {
-  console.log(`Express server listening on port 3000`);
 });
 
 // process.env.APP_BUNDLE_ID
 // process.env.TEST_DEVICE_TOKEN
+
+server.listen(port, () => {
+  console.log(`Listening on ${port}`);
+});
