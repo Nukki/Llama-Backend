@@ -7,18 +7,19 @@ const apn = require('apn');
 const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
 const port = process.env.PORT || 1337;
+const uuidv4 = require('uuid/v4');
 
 // setup sockets
 io.on('connection', (socket) => {
   console.log("Ayyyy someone connected!!!!!" + socket.id)
-  const arr = [ { name: 'Jackie', long: `${Math.random()}`, lat: `${Math.random()}`, key: '3'},];
+  const arr = [ { name: 'Jackie', long: Math.random(), lat: Math.random(), uuid: '3'},];
   socket.emit('update', arr);
   console.log('emitted location update');
-  // setInterval(() => {
-  //   const arr = [ { name: 'Jackie', long: `${Math.random()}`, lat: `${Math.random()}`, key: '3'},];
-  //   socket.emit('update', arr);
-  //   console.log('emitted location update');
-  // },1000);
+
+  socket.on('create_user', (user_object) => {
+    console.log("Creating new user!")
+    socket.emit('user_created', { name: 'Friendly Llama', uuid: uuidv4() })
+  })
   socket.on('disconnect', () => {
     console.log(`socket ${socket.id} disonnected`);
   })
@@ -77,10 +78,9 @@ app.post('/notify', (req, res) => {
   res.status(200).send('I see you need a notification');
 })
 
-// unsafe person sends location updates here and
-// they are emitted to an appropriate socket room
+// unsafe person sends location updates here 
 app.post('/update', (req, res) => {
-
+ // will emit socket channel 'update' event and new coords
 })
 
 // closes the socket room with location sharing
