@@ -8,6 +8,15 @@ const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
 const port = process.env.PORT || 1337;
 const uuidv4 = require('uuid/v4');
+const mongoose = require('mongoose');
+const User = require('./models/user');
+
+// setup db
+let mongo_url = process.env.MONGO_URI;
+mongoose.connect(mongo_url, { useNewUrlParser: true });
+mongoose.Promise = global.Promise;
+let db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 // setup sockets
 io.on('connection', (socket) => {
@@ -48,6 +57,27 @@ app.get('/', (req, res) => {
   res.status(200).send('Hello');
 })
 
+//test db
+app.post('/user', (req, res) => {
+    let usr = new User(
+        {
+            name: req.body.name,
+            uuid: req.body.uuid,
+            device_token: req.body.device_token,
+            active: true,
+            lat: req.body.lat,
+            long: req.body.long,
+        }
+    );
+
+    usr.save((err) =>  {
+        if (err) {
+            return next(err);
+        }
+        res.send('User Created successfully')
+    })
+})
+
 // starts a socket room for geofencing and location sharing
 // device_token, long, lat will be in req.body
 app.post('/notify', (req, res) => {
@@ -78,7 +108,7 @@ app.post('/notify', (req, res) => {
   res.status(200).send('I see you need a notification');
 })
 
-// unsafe person sends location updates here 
+// unsafe person sends location updates here
 app.post('/update', (req, res) => {
  // will emit socket channel 'update' event and new coords
 })
@@ -89,11 +119,11 @@ app.post('/imsafe', (req, res) => {
 })
 
 // error handling
-app.use((err, req, res, next) => { latest
+app.use((err, req, res, next) => {
   console.log(err)
   res.status(err.status || 500).send(err.message || 'Internal server error.');
 });
-app.use((req, res) => { latest
+app.use((req, res) => { 
   res.sendStatus(404);
 });
 
