@@ -2,17 +2,18 @@ const path = require('path');
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const router = require('./routes');
-const utils = require('./utils');
 const apn = require('apn');
+const mongoose = require('mongoose');
 
 const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
 const port = process.env.PORT || 1337;
-const mongoose = require('mongoose');
+
+const router = require('./routes');
+const socketSetup = require('./sockets');
 
 // setup db
-let mongo_url = process.env.MONGO_URI;
+const mongo_url = process.env.MONGO_URI;
 mongoose.connect(mongo_url, { useNewUrlParser: true });
 mongoose.Promise = global.Promise;
 let db = mongoose.connection;
@@ -21,19 +22,7 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 // setup sockets
 io.on('connection', (socket) => {
   console.log("New connection " + socket.id);
-  socket.on('create_user', (user_object) => {
-    console.log("Creating new user!")
-    socket.emit('user_created', utils.createUser(user_object));
-  });
-  socket.on('active', (user_object) => {
-    utils.setActiveStatus(user_object, true);
-  });
-  socket.on('not_active', (user_object) => {
-    utils.setActiveStatus(user_object, false);
-  });
-  socket.on('disconnect', () => {
-    console.log(`socket ${socket.id} disonnected`);
-  })
+  socketSetup(socket);
 });
 
 // set up APNs
@@ -59,7 +48,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// setup express router
 app.use('/user', router);
 app.get('/', (req, res) => {
   console.log('route: / was hit')
