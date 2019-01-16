@@ -2,17 +2,18 @@ const path = require('path');
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const router = require('./routes');
-const utils = require('./utils');
 const apn = require('apn');
+const mongoose = require('mongoose');
 
 const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
 const port = process.env.PORT || 1337;
-const mongoose = require('mongoose');
+
+const router = require('./routes');
+const utils = require('./utils');
 
 // setup db
-let mongo_url = process.env.MONGO_URI;
+const mongo_url = process.env.MONGO_URI;
 mongoose.connect(mongo_url, { useNewUrlParser: true });
 mongoose.Promise = global.Promise;
 let db = mongoose.connection;
@@ -27,9 +28,12 @@ io.on('connection', (socket) => {
   });
   socket.on('active', (user_object) => {
     utils.setActiveStatus(user_object, true);
+    utils.updateLocation(user_object);
+    //join room
   });
   socket.on('not_active', (user_object) => {
     utils.setActiveStatus(user_object, false);
+    // leave room
   });
   socket.on('disconnect', () => {
     console.log(`socket ${socket.id} disonnected`);
@@ -59,7 +63,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// setup express router
 app.use('/user', router);
 app.get('/', (req, res) => {
   console.log('route: / was hit')
