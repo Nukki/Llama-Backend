@@ -10,7 +10,7 @@ const io = require('socket.io').listen(server);
 const port = process.env.PORT || 1337;
 
 const router = require('./routes');
-const utils = require('./utils');
+const socketSetup = require('./sockets');
 
 // setup db
 const mongo_url = process.env.MONGO_URI;
@@ -22,22 +22,7 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 // setup sockets
 io.on('connection', (socket) => {
   console.log("New connection " + socket.id);
-  socket.on('create_user', (user_object) => {
-    console.log("Creating new user!")
-    socket.emit('user_created', utils.createUser(user_object));
-  });
-  socket.on('active', (user_object) => {
-    utils.setActiveStatus(user_object, true);
-    utils.updateLocation(user_object);
-    //join room
-  });
-  socket.on('not_active', (user_object) => {
-    utils.setActiveStatus(user_object, false);
-    // leave room
-  });
-  socket.on('disconnect', () => {
-    console.log(`socket ${socket.id} disonnected`);
-  })
+  socketSetup(socket);
 });
 
 // set up APNs

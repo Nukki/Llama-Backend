@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const utils = require('../utils');
-const User = require('../models/user');
 
-// active person sends location updates here
+// active person sends background location updates here
 router.post('/update', (req, res) => {
- // will save location to db
+ utils.updateLocation({ // save location to db
+   uuid: req.body.uuid,
+   lat: req.body.lat,
+   long: req.body.long,
+ })
 })
 
 // starts a socket room for geofencing and location sharing
@@ -20,10 +23,13 @@ router.post('/notify', (req, res) => {
     lat: req.body.lat,
     long: req.body.long
   });
+  // broadcast to all connections about new room
+  io.sockets.emit('new_room');
+  // they will recat by reactivating again
 
   // send notifications to active users nearby
   // token identifies a unique user with APNs
-  utils.getRelevantTokens(req.body.lat, req.body.long, (tokens) => {
+  utils.getRelevantTokens(req.body.uuid, req.body.lat, req.body.long, (tokens) => {
     console.log("tokens in routes ", tokens);
     // configure a notification
     // var noty = new apn.Notification();
@@ -48,8 +54,8 @@ router.post('/notify', (req, res) => {
 
 // unsafe person sends location updates here
 router.post('/roomUpdate', (req, res) => {
- // will emit socket channel 'update' event and new coords
  // save new location to db
+ utils.updateRoom(req.body.uuid, req.body.lat, req.body.long);
  const io = req.io;
  const arr = [ { name: req.body.name, long: req.body.long, lat: req.body.lat, uuid: req.body.uuid},];
  io.sockets.emit('update', arr);

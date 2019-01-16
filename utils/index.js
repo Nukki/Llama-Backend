@@ -3,6 +3,7 @@ const Geofence = require('../models/geofence');
 const uuidv4 = require('uuid/v4');
 
 module.exports = {
+
   createUser: (user_object) => {
     let usr = new User({
       name: "Friendly Llama",
@@ -63,29 +64,50 @@ module.exports = {
     });
   },
 
+  updateRoom: (roomName, lat, long ) => {
+    Geofence.findOne({ 'name': roomName }, (err, room) => {
+      if (err) return (err);
+      room.long = long;
+      room.lat = lat;
+      room.save((err) =>  {
+        if (err) {
+          console.log("DB SAVE ERR ", err)
+          return (err);
+        }
+      });
+
+    })
+  },
+
   removeRoom: (name) => {
     Geofence.deleteOne({ name: name }, (err) => {
       if (err) return (err);
     })
   },
 
-  getRelevantTokens: (lat, long, callback) => {
+  getRelevantTokens: (uuid, lat, long, callback) => {
     const tokens = [];
     User.find({ 'active': true }, (err, usrs) => {
       const usrsCloseby = usrs.filter((usr) => (
         usr.lat <= lat + 0.2 && usr.lat > lat - 0.2 ) && (
-        usr.long <= long + 0.2 && usr.long > long - 0.2
-      ))
-      console.log("gud usrs", usrsCloseby);
-      const tokens = [];
-      usrsCloseby && usrsCloseby.forEach((usr) => {
-        tokens.push(usr.device_token);
-      });
+        usr.long <= long + 0.2 && usr.long > long - 0.2) && (
+        usr.uuid !== uuid
+      ));
+      // console.log("gud usrs", usrsCloseby);
+      const tokens = usrsCloseby.map((usr) => usr.device_token );
       callback(tokens);
     })
   },
 
-  getRoomsToJoin: (lat, long) => {
-
+  getRoomsToJoin: (user_obj, callback) => {
+    Geofence.find({}, (err, rooms) => {
+      const roomsNearby = rooms.filter((room) => (
+        room.lat <= user_obj.lat + 0.2 && room.lat > user_obj.lat - 0.2 ) && (
+        room.long <= user_obj.long + 0.2 && room.long > user_obj.long - 0.2) && (
+        room.name !== user_obj.uuid
+      ));
+      let names = roomsNearby.map((rm) => rm.name );
+      callback(names);
+    })
   },
 }
