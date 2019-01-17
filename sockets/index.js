@@ -14,8 +14,8 @@ module.exports = (socket, io) => {
         if (!(room.name in socket.rooms)) {
           socket.join(room.name);
           console.log(`socket ${socket.id} joined room ${room.name}`);
-          const payload = { uuid: room.name, lat: `${room.lat}`, long: `${room.long}` }
-          socket.emit('update', payload);
+          const llama = { uuid: room.name, lat: `${room.lat}`, long: `${room.long}` }
+          socket.emit('add_llama', llama);
         }
       })
     })
