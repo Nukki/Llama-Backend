@@ -24,7 +24,7 @@ router.post('/notify', (req, res) => {
     long: req.body.long
   });
   // broadcast to all connections about new room
-  io.sockets.emit('new_room');
+  io.sockets.emit('new_llama');
 
   // send notifications to active users nearby
   // token identifies a unique user with APNs
@@ -52,13 +52,13 @@ router.post('/notify', (req, res) => {
 })
 
 // unsafe person sends location updates here
-router.post('/roomUpdate', (req, res) => {
+router.post('/llamaUpdate', (req, res) => {
  // save new location to db
  utils.updateRoom(req.body.uuid, req.body.lat, req.body.long);
  const io = req.io;
  // const arr = [ { name: req.body.name, long: req.body.long, lat: req.body.lat, uuid: req.body.uuid},];
  const llama = { long: req.body.long, lat: req.body.lat, uuid: req.body.uuid };
- io.sockets.in(req.body.uuid).emit('update', llama);
+ io.sockets.in(req.body.uuid).emit('update_llama', llama);
  console.log('emitted unsafe person location update');
  res.status(200).send('unsafe update success');
 })
