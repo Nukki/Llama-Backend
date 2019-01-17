@@ -1,6 +1,6 @@
 const utils = require('../utils');
 
-module.exports = (socket) => {
+module.exports = (socket, io) => {
   socket.on('create_user', (user_object) => {
     console.log("Creating new user!")
     socket.emit('user_created', utils.createUser(user_object));
@@ -9,10 +9,14 @@ module.exports = (socket) => {
     console.log("inside active");
     utils.setActiveStatus(user_object, true);
     utils.updateLocation(user_object);
-    utils.getRoomsToJoin(user_object, (roomNames) => {
-      roomNames.forEach((room) => {
-        socket.join(room);
-        console.log(`socket ${socket.id} joined room ${room}`);
+    utils.getRoomsToJoin(user_object, (rooms) => {
+      rooms.forEach((room) => {
+        if (!(room.name in socket.rooms)) {
+          socket.join(room.name);
+          console.log(`socket ${socket.id} joined room ${room.name}`);
+          const payload = { uuid: room.name, lat: `${room.lat}`, long: `${room.long}` }
+          socket.emit('update', payload);
+        }
       })
     })
   });

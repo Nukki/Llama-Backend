@@ -25,7 +25,6 @@ router.post('/notify', (req, res) => {
   });
   // broadcast to all connections about new room
   io.sockets.emit('new_room');
-  // they will recat by reactivating again
 
   // send notifications to active users nearby
   // token identifies a unique user with APNs
@@ -57,8 +56,9 @@ router.post('/roomUpdate', (req, res) => {
  // save new location to db
  utils.updateRoom(req.body.uuid, req.body.lat, req.body.long);
  const io = req.io;
- const arr = [ { name: req.body.name, long: req.body.long, lat: req.body.lat, uuid: req.body.uuid},];
- io.sockets.emit('update', arr);
+ // const arr = [ { name: req.body.name, long: req.body.long, lat: req.body.lat, uuid: req.body.uuid},];
+ const llama = { long: req.body.long, lat: req.body.lat, uuid: req.body.uuid };
+ io.sockets.in(req.body.uuid).emit('update', llama);
  console.log('emitted unsafe person location update');
  res.status(200).send('unsafe update success');
 })
@@ -67,6 +67,12 @@ router.post('/roomUpdate', (req, res) => {
 router.post('/imsafe', (req, res) => {
   console.log('im safe');
   utils.removeRoom(req.body.uuid);
+  const io = req.io;
+  io.sockets.in(req.body.uuid).emit('clear', req.body.uuid);
+  io.of('/').in(req.body.uuid).clients((err, clients) => {
+    console.log(clients);
+    clients.forEach((c) => io.sockets.connected[c].leave(req.body.uuid));
+  });
   res.send('You are safe! awesome!')
 })
 
