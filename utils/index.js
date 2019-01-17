@@ -100,14 +100,15 @@ module.exports = {
   },
 
   getRoomsToJoin: (user_obj, callback) => {
+    console.log("getting the right rooms");
     Geofence.find({}, (err, rooms) => {
       const roomsNearby = rooms.filter((room) => (
         room.lat <= user_obj.lat + 0.2 && room.lat > user_obj.lat - 0.2 ) && (
         room.long <= user_obj.long + 0.2 && room.long > user_obj.long - 0.2) && (
         room.name !== user_obj.uuid
       ));
-      let names = roomsNearby.map((rm) => rm.name );
-      callback(names);
+      // let names = roomsNearby.map((rm) => rm.name );
+      callback(roomsNearby);
     })
   },
 }

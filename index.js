@@ -22,7 +22,7 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 // setup sockets
 io.on('connection', (socket) => {
   console.log("New connection " + socket.id);
-  socketSetup(socket);
+  socketSetup(socket, io);
 });
 
 // set up APNs
