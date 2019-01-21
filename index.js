@@ -19,12 +19,6 @@ mongoose.Promise = global.Promise;
 let db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
-// setup sockets
-io.on('connection', (socket) => {
-  console.log("New connection " + socket.id);
-  socketSetup(socket, io);
-});
-
 // set up APNs
 const options = {
   token: {
@@ -36,15 +30,21 @@ const options = {
 };
 const apnProvider = new apn.Provider(options);
 
+// setup sockets
+io.on('connection', (socket) => {
+  console.log("New connection " + socket.id);
+  socketSetup(socket, io, apn, apnProvider);
+});
+
 // use JSON parsing middleware
 app.use(bodyParser.urlencoded({extended: true}))
    .use(bodyParser.json());
 
-// make io and apn available to router
+// make variables available to router
 app.use((req, res, next) => {
     req.io = io;
-    req.apn = apn;
-    req.apnProvider = apnProvider;
+    // req.apn = apn;
+    // req.apnProvider = apnProvider;
     next();
 });
 

@@ -37,7 +37,7 @@ module.exports = {
     })
   },
 
-  setSafeStatus: (user_object, value) => {
+  setSafeStatus: (user_object, value, callback) => {
     Person.findOne({ 'uuid': user_object.uuid }, (err, usr) => {
       if (err) return (err);//handleError(err);
       usr.isSafe = value;
@@ -46,6 +46,7 @@ module.exports = {
           console.log("DB SAVE ERR ", err)
           return (err);
         }
+        callback();
       });
     })
   },
@@ -62,42 +63,6 @@ module.exports = {
           return (err);
         }
       });
-    })
-  },
-
-  createRoom: (user_object) => {
-    let room = new Geofence({
-      name: user_object.uuid,
-      lat: user_object.lat,
-      long: user_object.long,
-    })
-    room.save((err) =>  {
-      if (err) {
-        console.log("DB SAVE ERR ", err)
-        return (err);
-      }
-      return room.name;
-    });
-  },
-
-  updateRoom: (roomName, lat, long ) => {
-    Geofence.findOne({ 'name': roomName }, (err, room) => {
-      if (err) return (err);
-      room.long = long;
-      room.lat = lat;
-      room.save((err) =>  {
-        if (err) {
-          console.log("DB SAVE ERR ", err)
-          return (err);
-        }
-      });
-
-    })
-  },
-
-  removeRoom: (name) => {
-    Geofence.deleteOne({ name: name }, (err) => {
-      if (err) return (err);
     })
   },
 
@@ -120,7 +85,7 @@ module.exports = {
       const llamasNearby = users.filter((u) => (
         u.lat <= user_obj.lat + 0.2 && u.lat > user_obj.lat - 0.2 ) && (
         u.long <= user_obj.long + 0.2 && u.long > user_obj.long - 0.2) && (
-        u.name !== user_obj.uuid
+        u.uuid !== user_obj.uuid
       ));
       callback(llamasNearby);
     })
@@ -132,7 +97,7 @@ module.exports = {
       const responders = users.filter((r) => (
         r.lat <= user_obj.lat + 0.2 && r.lat > user_obj.lat - 0.2 ) && (
         r.long <= user_obj.long + 0.2 && r.long > user_obj.long - 0.2) && (
-        r.name !== user_obj.uuid
+        r.uuid !== user_obj.uuid
       ));
       callback(responders);
     })
