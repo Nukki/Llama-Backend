@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-let userSchema = new mongoose.Schema({
+let personSchema = new mongoose.Schema({
   name: { type: String, required: true },
   uuid: { type: String, required: true },
   device_token: { type: String, required: true },
@@ -8,6 +8,7 @@ let userSchema = new mongoose.Schema({
   isSafe: { type: Boolean, required: true },
   lat: { type: mongoose.Schema.Types.Decimal128, required: true },
   long: { type: mongoose.Schema.Types.Decimal128, required: true },
+  picture: { type: String, required: false },
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('Person', personSchema);
