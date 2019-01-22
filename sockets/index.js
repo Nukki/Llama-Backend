@@ -16,7 +16,7 @@ module.exports = (socket, io, apn, apnProvider) => {
         if (!(room.uuid in socket.rooms)) {
           socket.join(room.uuid);
           console.log(`socket ${socket.id} joined llama room ${room.uuid}`);
-          const llama = { uuid: room.uuid, lat: `${room.lat}`, long: `${room.long}` }
+          const llama = { uuid: room.uuid, lat: `${room.lat}`, long: `${room.long}`, name: `${room.name}` }
           socket.emit('add_llama', llama);
         }
       })
@@ -27,12 +27,14 @@ module.exports = (socket, io, apn, apnProvider) => {
           if(!(re.uuid in socket.rooms)) {
             socket.join(re.uuid);
             console.log(`socket ${socket.id} joined responder room ${re.uuid}`);
-            const resp = { uuid: re.uuid, lat: `${re.lat}`, long: `${re.long}` }
+            const resp = { uuid: re.uuid, lat: `${re.lat}`, long: `${re.long}`, name: `${re.name}` }
             socket.emit('add_responder', resp);
           }
         })
       })
-    } // end if
+    } else {
+      io.sockets.emit('new_person');
+    }
   });
 
   socket.on('not_active', (user_object) => {
@@ -50,7 +52,7 @@ module.exports = (socket, io, apn, apnProvider) => {
     console.log(`user ${llama.uuid} needs help. coords: ${llama.lat} ${llama.long}`);
     utils.updateLocation(llama);
     utils.setSafeStatus(llama, false, () => {
-      io.sockets.emit('new_llama');
+      io.sockets.emit('new_person');
     });
 
     // send notifications to active users nearby
