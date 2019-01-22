@@ -16,8 +16,13 @@ module.exports = (socket, io, apn, apnProvider) => {
         if (!(room.uuid in socket.rooms)) {
           socket.join(room.uuid);
           console.log(`socket ${socket.id} joined llama room ${room.uuid}`);
-          const llama = { uuid: room.uuid, lat: `${room.lat}`, long: `${room.long}` }
+          const llama = { uuid: room.uuid, lat: `${room.lat}`, long: `${room.long}`, name: `${room.name}` }
+          // io.sockets.emit('new_responder');
           socket.emit('add_llama', llama);
+          // emit to llama room  about new reponder
+          // console.log("users already in llama socket ", io.sockets.in(room.uuid).sockets);
+
+          io.sockets.emit('new_responder'); //needs to join room
         }
       })
     })
@@ -27,12 +32,12 @@ module.exports = (socket, io, apn, apnProvider) => {
           if(!(re.uuid in socket.rooms)) {
             socket.join(re.uuid);
             console.log(`socket ${socket.id} joined responder room ${re.uuid}`);
-            const resp = { uuid: re.uuid, lat: `${re.lat}`, long: `${re.long}` }
+            const resp = { uuid: re.uuid, lat: `${re.lat}`, long: `${re.long}`, name: `${re.name}` }
             socket.emit('add_responder', resp);
           }
         })
       })
-    } // end if
+    }
   });
 
   socket.on('not_active', (user_object) => {
@@ -91,11 +96,17 @@ module.exports = (socket, io, apn, apnProvider) => {
     // leave all responder rooms, but not llamas
     console.log("Responders to leave", socket.rooms);
     Object.keys(socket.rooms).forEach((r) => {
-      if (true) {
-        socket.leave(r);
-        socket.emit('clear', r);
-        console.log(`llama socket ${socket.id} leaving responder room ${r}`)
+      r && console.log("Will check status of ", r);
+      if (r && r!== socket.id) {
+        utils.personIsSafe(r, () => {
+          socket.leave(r);
+          socket.emit('clear', r);
+          console.log(`llama socket ${socket.id} leaving responder room ${r}`)
+        })
       }
+        // socket.leave(r);
+        // socket.emit('clear', r);
+        // console.log(`llama socket ${socket.id} leaving responder room ${r}`)
     })
 
     utils.setSafeStatus(llama, true, () => {});

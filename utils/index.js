@@ -1,6 +1,4 @@
-const User = require('../models/user');
 const Person = require('../models/person');
-const Geofence = require('../models/geofence');
 const uuidv4 = require('uuid/v4');
 
 module.exports = {
@@ -51,6 +49,13 @@ module.exports = {
     })
   },
 
+  personIsSafe: (uuid, callback) => {
+    Person.findOne({ 'uuid': uuid }, (err, usr) => {
+      if (err) return (err);//handleError(err);
+      console.log("returning person safe status");
+      callback();
+    })
+  },
 
   updateLocation: (user_object) => {
     Person.findOne({ 'uuid': user_object.uuid }, (err, usr) => {
