@@ -17,7 +17,12 @@ module.exports = (socket, io, apn, apnProvider) => {
           socket.join(room.uuid);
           console.log(`socket ${socket.id} joined llama room ${room.uuid}`);
           const llama = { uuid: room.uuid, lat: `${room.lat}`, long: `${room.long}`, name: `${room.name}` }
+          // io.sockets.emit('new_responder');
           socket.emit('add_llama', llama);
+          // emit to llama room  about new reponder
+          // console.log("users already in llama socket ", io.sockets.in(room.uuid).sockets);
+
+          io.sockets.emit('new_responder'); //needs to join room
         }
       })
     })
@@ -32,8 +37,6 @@ module.exports = (socket, io, apn, apnProvider) => {
           }
         })
       })
-    } else {
-      io.sockets.emit('new_person');
     }
   });
 
@@ -52,7 +55,7 @@ module.exports = (socket, io, apn, apnProvider) => {
     console.log(`user ${llama.uuid} needs help. coords: ${llama.lat} ${llama.long}`);
     utils.updateLocation(llama);
     utils.setSafeStatus(llama, false, () => {
-      io.sockets.emit('new_person');
+      io.sockets.emit('new_llama');
     });
 
     // send notifications to active users nearby
@@ -93,11 +96,17 @@ module.exports = (socket, io, apn, apnProvider) => {
     // leave all responder rooms, but not llamas
     console.log("Responders to leave", socket.rooms);
     Object.keys(socket.rooms).forEach((r) => {
-      if (true) {
-        socket.leave(r);
-        socket.emit('clear', r);
-        console.log(`llama socket ${socket.id} leaving responder room ${r}`)
+      r && console.log("Will check status of ", r);
+      if (r && r!== socket.id) {
+        utils.personIsSafe(r, () => {
+          socket.leave(r);
+          socket.emit('clear', r);
+          console.log(`llama socket ${socket.id} leaving responder room ${r}`)
+        })
       }
+        // socket.leave(r);
+        // socket.emit('clear', r);
+        // console.log(`llama socket ${socket.id} leaving responder room ${r}`)
     })
 
     utils.setSafeStatus(llama, true, () => {});
