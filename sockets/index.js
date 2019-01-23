@@ -63,18 +63,25 @@ module.exports = (socket, io, apn, apnProvider) => {
     utils.getRelevantTokens(llama.uuid, llama.lat, llama.long, (tokens) => {
       console.log("tokens in routes ", tokens);
       // configure a notification
-      // var noty = new apn.Notification();
-      // noty.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
-      // noty.badge = 1;
-      // noty.sound = "ping.aiff";
-      // noty.alert = "OMG!!! Its a notification";
-      // noty.payload = {
-      //   'messageFrom': 'super duper app'
-      // };
-      // noty.topic = process.env.APP_BUNDLE_ID;
-      // // noty.body = 'Someone nearby needs help';
-      //
-      // // send Notification // TODO loop through tokens
+      var noty = new apn.Notification();
+      noty.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
+      noty.badge = 1;
+      noty.sound = "ping.aiff";
+      noty.alert = "OMG!!! Its a notification";
+      noty.payload = {
+        'messageFrom': 'super duper app'
+      };
+      noty.topic = process.env.APP_BUNDLE_ID;
+      noty.body = 'Someone nearby needs help';
+
+
+      // send Notification 
+      tokens.forEach((tkn) => {
+        apnProvider.send(noty, tkn).then( (result) => {
+          // see documentation for an explanation of result
+          console.log(result);
+        });
+      })
       // apnProvider.send(noty, device_token).then( (result) => {
       //   // see documentation for an explanation of result
       //   console.log(result);
