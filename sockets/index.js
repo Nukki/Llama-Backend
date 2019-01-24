@@ -16,13 +16,14 @@ module.exports = (socket, io, apn, apnProvider) => {
         if (!(room.uuid in socket.rooms)) {
           socket.join(room.uuid);
           console.log(`socket ${socket.id} joined llama room ${room.uuid}`);
-          const llama = { uuid: room.uuid, lat: `${room.lat}`, long: `${room.long}`, name: `${room.name}` }
-          // io.sockets.emit('new_responder');
+          const llama = {
+            uuid: room.uuid,
+            lat: `${room.lat}`,
+            long: `${room.long}`,
+            name: `${room.name}`
+          }
           socket.emit('add_llama', llama);
-          // emit to llama room  about new reponder
-          // console.log("users already in llama socket ", io.sockets.in(room.uuid).sockets);
-
-          io.sockets.emit('new_responder'); //needs to join room
+          io.sockets.emit('new_responder');
         }
       })
     })
@@ -50,21 +51,19 @@ module.exports = (socket, io, apn, apnProvider) => {
     });
   });
 
-  socket.on('notify', (user_object) => {
-    const llama = { long: user_object.long, lat: user_object.lat, uuid: user_object.uuid };
+  socket.on('notify', (llama) => {
     console.log(`user ${llama.uuid} needs help. coords: ${llama.lat} ${llama.long}`);
     utils.updateLocation(llama);
     utils.setSafeStatus(llama, false, () => {
-      io.sockets.emit('new_llama');
+      io.sockets.emit('new_llama', llama.uuid);
     });
 
-    // send notifications to active users nearby
     // token identifies a unique user with APNs
     utils.getRelevantTokens(llama.uuid, llama.lat, llama.long, (tokens) => {
       console.log("tokens in routes ", tokens);
       // configure a notification
       var noty = new apn.Notification();
-      noty.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
+      noty.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires
       noty.badge = 1;
       noty.sound = "ping.aiff";
       noty.alert = "OMG!!! Its a notification";
@@ -74,21 +73,17 @@ module.exports = (socket, io, apn, apnProvider) => {
       noty.topic = process.env.APP_BUNDLE_ID;
       noty.body = 'Someone nearby needs help';
 
-
       // send Notification
       tokens.forEach((tkn) => {
         apnProvider.send(noty, tkn).then( (result) => {
-          // see documentation for an explanation of result
           console.log(result);
         });
       })
     });
   });
 
-  socket.on('imsafe', (user_object) => {
+  socket.on('imsafe', (llama) => {
     console.log('im safe');
-    const llama = { uuid: user_object.uuid };
-
     // disappear from other people's radars
     io.sockets.in(llama.uuid).emit('clear', llama.uuid);
     io.of('/').in(llama.uuid).clients((err, clients) => {
@@ -100,23 +95,27 @@ module.exports = (socket, io, apn, apnProvider) => {
     console.log("Responders to leave", socket.rooms);
     Object.keys(socket.rooms).forEach((r) => {
       r && console.log("Will check status of ", r);
-      if (r && r!== socket.id) {
-        utils.personIsSafe(r, () => {
-          socket.leave(r);
-          socket.emit('clear', r);
-          console.log(`llama socket ${socket.id} leaving responder room ${r}`)
-        })
+      if (r && r!== socket.id) { // if it's not me
+        utils.personIsSafe(r, (isSafe) => {
+          if(isSafe) {
+            socket.leave(r);
+            socket.emit('clear', r);
+            console.log(`llama socket ${socket.id} leaving responder room ${r}`)
+          }
+          // socket.leave(r);
+          // socket.emit('clear', r);
+          // console.log(`llama socket ${socket.id} leaving responder room ${r}`)
+        });
       }
-    })
-
+    });
     utils.setSafeStatus(llama, true, () => {});
   });
 
   socket.on('update_location', (user_object) => {
     // let everyone listening in the room know
     io.sockets.in(user_object.uuid).emit('update', user_object);
-    // save new location to db
-    utils.updateLocation(user_object);
+    utils.updateLocation(user_object); // save new location to db
+    console.log("=======sent out an update========");
   })
 
   socket.on('disconnect', () => {

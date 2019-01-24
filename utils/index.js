@@ -4,8 +4,9 @@ const uuidv4 = require('uuid/v4');
 module.exports = {
 
   createUser: (user_object) => {
+    const names = ['Nikki', 'Vicky', 'Ricky', 'Andre', 'Audrey'];
     let usr = new Person({
-      name: "Friendly Llama",
+      name: names[Math.floor(Math.random() * 4)],
       uuid: uuidv4(),
       device_token: user_object.device_token,
       active: true,
@@ -24,7 +25,7 @@ module.exports = {
 
   setActiveStatus: (user_object, value) => {
     Person.findOne({ 'uuid': user_object.uuid }, (err, usr) => {
-      if (err) return (err);//handleError(err);
+      if (err) return (err);
       usr.active = value;
       usr.save((err) =>  {
         if (err) {
@@ -32,12 +33,12 @@ module.exports = {
           return (err);
         }
       });
-    })
+    });
   },
 
   setSafeStatus: (user_object, value, callback) => {
     Person.findOne({ 'uuid': user_object.uuid }, (err, usr) => {
-      if (err) return (err);//handleError(err);
+      if (err) return (err);
       usr.isSafe = value;
       usr.save((err) =>  {
         if (err) {
@@ -46,15 +47,15 @@ module.exports = {
         }
         callback();
       });
-    })
+    });
   },
 
   personIsSafe: (uuid, callback) => {
     Person.findOne({ 'uuid': uuid }, (err, usr) => {
-      if (err) return (err);//handleError(err);
+      if (err) return (err);
       console.log("returning person safe status");
-      callback();
-    })
+      callback(usr.isSafe);
+    });
   },
 
   updateLocation: (user_object) => {
@@ -68,40 +69,39 @@ module.exports = {
           return (err);
         }
       });
-    })
+    });
   },
 
   getRelevantTokens: (uuid, lat, long, callback) => {
     Person.find({ 'active': true, isSafe: true }, (err, usrs) => {
       const usrsCloseby = usrs.filter((usr) => (
-        usr.lat <= lat + 0.2 && usr.lat > lat - 0.2 ) && (
-        usr.long <= long + 0.2 && usr.long > long - 0.2) && (
+        usr.lat <= lat + 0.01 && usr.lat > lat - 0.01 ) && (
+        usr.long <= long + 0.015 && usr.long > long - 0.015) && (
         usr.uuid !== uuid
       ));
-      // console.log("gud usrs", usrsCloseby);
       const tokens = usrsCloseby.map((usr) => usr.device_token );
       callback(tokens);
-    })
+    });
   },
 
   getLlamas: (user_obj, callback) => {
     console.log("getting the llamas");
     Person.find({ 'isSafe' : false }, (err, users) => {
       const llamasNearby = users.filter((u) => (
-        u.lat <= user_obj.lat + 0.2 && u.lat > user_obj.lat - 0.2 ) && (
-        u.long <= user_obj.long + 0.2 && u.long > user_obj.long - 0.2) && (
+        u.lat <= user_obj.lat + 0.01 && u.lat > user_obj.lat - 0.01 ) && (
+        u.long <= user_obj.long + 0.015 && u.long > user_obj.long - 0.015) && (
         u.uuid !== user_obj.uuid
       ));
       callback(llamasNearby);
-    })
+    });
   },
 
   getResponders: (user_obj, callback) => {
     console.log("getting the responders rooms");
     Person.find({ 'active': true, 'isSafe' : true }, (err, users) => {
       const responders = users.filter((r) => (
-        r.lat <= user_obj.lat + 0.2 && r.lat > user_obj.lat - 0.2 ) && (
-        r.long <= user_obj.long + 0.2 && r.long > user_obj.long - 0.2) && (
+        r.lat <= user_obj.lat + 0.01 && r.lat > user_obj.lat - 0.01 ) && (
+        r.long <= user_obj.long + 0.015 && r.long > user_obj.long - 0.015) && (
         r.uuid !== user_obj.uuid
       ));
       callback(responders);
