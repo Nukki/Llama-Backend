@@ -75,17 +75,13 @@ module.exports = (socket, io, apn, apnProvider) => {
       noty.body = 'Someone nearby needs help';
 
 
-      // send Notification 
+      // send Notification
       tokens.forEach((tkn) => {
         apnProvider.send(noty, tkn).then( (result) => {
           // see documentation for an explanation of result
           console.log(result);
         });
       })
-      // apnProvider.send(noty, device_token).then( (result) => {
-      //   // see documentation for an explanation of result
-      //   console.log(result);
-      // });
     });
   });
 
@@ -111,13 +107,17 @@ module.exports = (socket, io, apn, apnProvider) => {
           console.log(`llama socket ${socket.id} leaving responder room ${r}`)
         })
       }
-        // socket.leave(r);
-        // socket.emit('clear', r);
-        // console.log(`llama socket ${socket.id} leaving responder room ${r}`)
     })
 
     utils.setSafeStatus(llama, true, () => {});
   });
+
+  socket.on('update_location', (user_object) => {
+    // let everyone listening in the room know
+    io.sockets.in(user_object.uuid).emit('update', user_object);
+    // save new location to db
+    utils.updateLocation(user_object);
+  })
 
   socket.on('disconnect', () => {
     console.log(`socket ${socket.id} disonnected`);
