@@ -33,6 +33,7 @@ const apnProvider = new apn.Provider(options);
 // setup sockets
 io.on('connection', (socket) => {
   console.log("New connection " + socket.id);
+  socket.emit('who_are_you');
   socketSetup(socket, io, apn, apnProvider);
 });
 
@@ -43,8 +44,6 @@ app.use(bodyParser.urlencoded({extended: true}))
 // make variables available to router
 app.use((req, res, next) => {
     req.io = io;
-    // req.apn = apn;
-    // req.apnProvider = apnProvider;
     next();
 });
 
